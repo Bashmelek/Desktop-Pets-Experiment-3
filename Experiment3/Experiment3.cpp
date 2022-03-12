@@ -107,7 +107,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    imageBase = (HBITMAP)LoadImage(
 	   NULL,
-	   L"piplup6.bmp",////\\GameResources
+	   L"piplup5.bmp",////\\GameResources
 	   IMAGE_BITMAP,
 	   0,
 	   0,
@@ -226,17 +226,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
 			HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
+
+
+			HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+			HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
 			
 			RECT rect = { 0, 0, 200, 200 };
 			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
+			//FillRect(tempDC2, &rect, WHITE_BRUSH);
 			FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
 
-			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
+
+			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageMask);
+			BitBlt(tempDC2, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
+			BitBlt(tempDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, NOTSRCCOPY);
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCAND);
+			DeleteObject(oldtempBMP);
+
+			oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
+			BitBlt(tempDC2, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCAND);
+
+
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
 
 			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
 
 			DeleteObject(oldtempBMP);
+			DeleteObject(oldtemp2BMP);
+			DeleteObject(temp2BMP);
 			DeleteObject(selectedBMP);
 			DeleteObject(memoryBMP);
 			DeleteObject(tempDC2);
