@@ -17,6 +17,10 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
+//my stuff
+HBITMAP imageBase;
+HBITMAP imageMask;
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -98,24 +102,46 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // Store instance handle in our global variable
-   int w = 140;
-   int h = 140;
+   int w = 200;
+   int h = 168;
+
+   imageBase = (HBITMAP)LoadImage(
+	   NULL,
+	   L"piplup6.bmp",////\\GameResources
+	   IMAGE_BITMAP,
+	   0,
+	   0,
+	   LR_LOADFROMFILE
+   );
+   imageMask = (HBITMAP)LoadImage(
+	   NULL,
+	   L"piplup5mask.bmp",////\\GameResources
+	   IMAGE_BITMAP,
+	   0,
+	   0,
+	   LR_LOADFROMFILE
+   );
 
 
    //HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT,//WS_OVERLAPPEDWINDOW,
    //   CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
    
    //thank you Song Zhu and Greg https://stackoverflow.com/questions/65286495/make-a-win32-window-transparent-to-messages-click-touch-keyboard
-   HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT, szTitle, szWindowClass,//WS_OVERLAPPEDWINDOW,
+   HWND hWnd = CreateWindowEx(WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST, szTitle, szWindowClass,//WS_OVERLAPPEDWINDOW,    WS_EX_TRANSPARENT
 	   WS_VISIBLE | WS_POPUP, 500, 150, w, h, NULL, NULL, hInstance, NULL);
 
-   if (!hWnd)
+   HWND hWnd2 = CreateWindowEx(WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT, szTitle, szWindowClass,//WS_OVERLAPPEDWINDOW,    WS_EX_TRANSPARENT
+	   WS_VISIBLE | WS_POPUP, 800, 150, w, h, NULL, NULL, hInstance, NULL);
+
+   if (!hWnd || !hWnd2)
    {
       return FALSE;
    }
+   //SetCapture(hWnd);
+   //ReleaseCapture();
    SetLayeredWindowAttributes(hWnd, 0, 255, LWA_ALPHA);
    //thank you! https://newbedev.com/creating-a-transparent-window-in-c-win32
-   SetLayeredWindowAttributes(hWnd, RGB(255, 255, 255), 0, LWA_COLORKEY);
+   SetLayeredWindowAttributes(hWnd, RGB(124, 254, 124), 0, LWA_COLORKEY);//previously transparent color was RGB(255, 255, 255) white  RGB(124, 254, 124) lime for v6
 
    //thank you! https://stackoverflow.com/questions/7724000/how-to-hide-collapse-main-menu-in-a-win32-mfc-application
    //Raymond Chen is the man
@@ -124,8 +150,31 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
+
+   /*
+   SetLayeredWindowAttributes(hWnd2, 0, 255, LWA_ALPHA);
+   SetLayeredWindowAttributes(hWnd2, RGB(255, 255, 255), 0, LWA_COLORKEY);
+   SetMenu(hWnd2, NULL);
+   ShowWindow(hWnd2, nCmdShow);
+   UpdateWindow(hWnd2);*/
+
    return TRUE;
 }
+
+
+//static BOOL CALLBACK enumWindowCallback(HWND hWnd, LPARAM lparam) {
+//	// List visible windows with a non-empty title
+//	//PostMessage(hWnd, WM_LBUTTONDOWN, 1, lparam);
+//	POINT atp = POINT();
+//	atp.x = 500;
+//	atp.y = 150;
+//	HWND target = ChildWindowFromPoint(hWnd,
+//		atp
+//	);
+//	PostMessage(target, WM_LBUTTONDOWN, 1, lparam);
+//	return TRUE;
+//}
+
 
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
@@ -139,8 +188,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (message == WM_TIMER) {
+		return 0;
+	}
     switch (message)
     {
+	case WM_CREATE:
+		SetTimer(hWnd, 1, 0, NULL);//120 good for demo
+		break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
@@ -163,9 +218,88 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
             // TODO: Add any drawing code that uses hdc here...
+			HDC hDC_Main = GetDC(hWnd);
+			HDC memoryDC = CreateCompatibleDC(hDC_Main);
+			HDC tempDC = CreateCompatibleDC(memoryDC);
+			HDC tempDC2 = CreateCompatibleDC(memoryDC);
+
+
+			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+			HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
+			
+			RECT rect = { 0, 0, 200, 200 };
+			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
+			FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
+
+			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
+
+			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+
+			DeleteObject(oldtempBMP);
+			DeleteObject(selectedBMP);
+			DeleteObject(memoryBMP);
+			DeleteObject(tempDC2);
+			DeleteObject(tempDC);
+			DeleteObject(memoryDC);
+
             EndPaint(hWnd, &ps);
         }
         break;
+	case WM_TIMER:
+	{
+		int x = 1;
+		x += 1;
+		{
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code that uses hdc here...
+			HDC hDC_Main = GetDC(hWnd);
+			HDC memoryDC = CreateCompatibleDC(hDC_Main);
+			HDC tempDC = CreateCompatibleDC(memoryDC);
+
+
+			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+			HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
+
+			RECT rect = { 0, 0, 200, 200 };
+			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
+			FillRect(memoryDC, &rect, limeBrush);
+
+			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
+
+			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+
+			DeleteObject(oldtempBMP);
+			DeleteObject(selectedBMP);
+			DeleteObject(memoryBMP);
+			DeleteObject(tempDC);
+			DeleteObject(memoryDC);
+
+			EndPaint(hWnd, &ps);
+		}
+		break;
+	}
+	////case WM_MOUSEMOVE:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+		break;
+	case WM_LBUTTONDOWN:
+	{
+		int x = 1;
+		x += 1;
+
+		SetWindowPos(hWnd, NULL, -300, 150, 200, 168, 0);
+
+		//EnumWindows(enumWindowCallback, lParam);
+		//PostMessage(GetDesktopWindow(), message, wParam, lParam);
+		break;
+	}
+	case WM_CANCELMODE:
+		break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
