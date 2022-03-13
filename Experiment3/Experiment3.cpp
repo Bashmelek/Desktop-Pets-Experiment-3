@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "Experiment3.h"
+#include <memory>
 
 #define MAX_LOADSTRING 100
 
@@ -15,11 +16,16 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+//INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 //my stuff
 HBITMAP imageBase;
 HBITMAP imageMask;
+std::unique_ptr <CreaturePet> thePet;
+HWND trueMainWND;
+HWND clickWND;
+
+int testcheck = 0;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -121,7 +127,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	   0,
 	   LR_LOADFROMFILE
    );
-
+   thePet = std::make_unique <CreaturePet>();
 
    //HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT,//WS_OVERLAPPEDWINDOW,
    //   CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
@@ -131,12 +137,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	   WS_VISIBLE | WS_POPUP, 500, 150, w, h, NULL, NULL, hInstance, NULL);
 
    HWND hWnd2 = CreateWindowEx(WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT, szTitle, szWindowClass,//WS_OVERLAPPEDWINDOW,    WS_EX_TRANSPARENT
-	   WS_VISIBLE | WS_POPUP, 800, 150, w, h, NULL, NULL, hInstance, NULL);
+	   WS_VISIBLE | WS_POPUP, 500, 150, w, h, NULL, NULL, hInstance, NULL);
 
    if (!hWnd || !hWnd2)
    {
       return FALSE;
    }
+   trueMainWND = hWnd2;
+   clickWND = hWnd;
+
    //SetCapture(hWnd);
    //ReleaseCapture();
    SetLayeredWindowAttributes(hWnd, 0, 255, LWA_ALPHA);
@@ -146,17 +155,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    //thank you! https://stackoverflow.com/questions/7724000/how-to-hide-collapse-main-menu-in-a-win32-mfc-application
    //Raymond Chen is the man
    SetMenu(hWnd, NULL); /* remove the menu */
-
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
 
-   /*
+   //section for the clickthrough window
    SetLayeredWindowAttributes(hWnd2, 0, 255, LWA_ALPHA);
-   SetLayeredWindowAttributes(hWnd2, RGB(255, 255, 255), 0, LWA_COLORKEY);
+   SetLayeredWindowAttributes(hWnd2, RGB(124, 254, 124), 0, LWA_COLORKEY);
    SetMenu(hWnd2, NULL);
    ShowWindow(hWnd2, nCmdShow);
-   UpdateWindow(hWnd2);*/
+   UpdateWindow(hWnd2);
 
    return TRUE;
 }
@@ -189,12 +197,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	if (message == WM_TIMER) {
-		return 0;
+		//return 0;
 	}
     switch (message)
     {
 	case WM_CREATE:
-		SetTimer(hWnd, 1, 0, NULL);//120 good for demo
+		SetTimer(hWnd, 1, 120, NULL);//120 good for demo
 		break;
     case WM_COMMAND:
         {
@@ -203,7 +211,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             switch (wmId)
             {
             case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+                //DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
             case IDM_EXIT:
                 DestroyWindow(hWnd);
@@ -215,13 +223,88 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_PAINT:
         {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd, &ps);
+		// TODO: Add any drawing code that uses hdc here...
+		HDC hDC_Main = GetDC(hWnd);
+		HDC memoryDC = CreateCompatibleDC(hDC_Main);
+		HDC tempDC = CreateCompatibleDC(memoryDC);
+		HDC tempDC2 = CreateCompatibleDC(memoryDC);
+		HDC tempDC3 = CreateCompatibleDC(memoryDC);
+
+
+		HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+		HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
+
+
+		HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+		HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
+
+
+		HBITMAP temp3BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+		HBITMAP oldtemp3BMP = (HBITMAP)SelectObject(tempDC3, temp3BMP);
+
+		RECT rect = { 0, 0, 200, 200 };
+		HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
+		FillRect(tempDC2, &rect, limeBrush);
+		FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
+
+
+		HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageMask);
+		BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCCOPY);
+		BitBlt(tempDC3, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, NOTSRCCOPY);
+		BitBlt(memoryDC, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC3, 0, 0, SRCAND);
+		DeleteObject(oldtempBMP);
+
+		//DO NOT delete the imageMask!
+		(HBITMAP)SelectObject(tempDC, imageBase);
+		BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCAND);
+
+		if (testcheck == 0) {
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+			testcheck += 1;
+		}
+		else
+		{
+			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+		}
+
+		//DeleteObject(oldtempBMP);
+		DeleteObject(oldtemp3BMP);
+		DeleteObject(temp3BMP);
+		DeleteObject(oldtemp2BMP);
+		DeleteObject(temp2BMP);
+		DeleteObject(selectedBMP);
+		DeleteObject(memoryBMP);
+		DeleteObject(tempDC3);
+		DeleteObject(tempDC2);
+		DeleteObject(tempDC);
+		DeleteObject(memoryDC);
+
+		EndPaint(hWnd, &ps);
+        }
+        break;
+	case WM_TIMER:
+	{
+		int x = 1;
+		x += 1;
+		{
+			if (hWnd = trueMainWND)
+			{
+				thePet->AdvanceFrame();
+			}
+			PostMessage(clickWND, WM_PAINT, wParam, lParam);
+
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code that uses hdc here...
 			HDC hDC_Main = GetDC(hWnd);
 			HDC memoryDC = CreateCompatibleDC(hDC_Main);
 			HDC tempDC = CreateCompatibleDC(memoryDC);
 			HDC tempDC2 = CreateCompatibleDC(memoryDC);
+			HDC tempDC3 = CreateCompatibleDC(memoryDC);
 
 
 			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
@@ -230,67 +313,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
 			HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
-			
+
+
+			HBITMAP temp3BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+			HBITMAP oldtemp3BMP = (HBITMAP)SelectObject(tempDC3, temp3BMP);
+
 			RECT rect = { 0, 0, 200, 200 };
 			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
-			//FillRect(tempDC2, &rect, WHITE_BRUSH);
+			FillRect(tempDC2, &rect, limeBrush);
 			FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
 
 
 			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageMask);
-			BitBlt(tempDC2, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
-			BitBlt(tempDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, NOTSRCCOPY);
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCAND);
+			BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCCOPY);
+			BitBlt(tempDC3, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, NOTSRCCOPY);
+			BitBlt(memoryDC, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC3, 0, 0, SRCAND);
 			DeleteObject(oldtempBMP);
 
-			oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
-			BitBlt(tempDC2, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCAND);
+			//DO NOT delete the imageMask!
+			(HBITMAP)SelectObject(tempDC, imageBase);
+			BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCAND);
 
+			if (testcheck == 0) {
+				BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+				BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+				testcheck += 1;
+			}
+			else
+			{
+				BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+				BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+			}
 
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
-
-			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-
-			DeleteObject(oldtempBMP);
+			//DeleteObject(oldtempBMP);
+			DeleteObject(oldtemp3BMP);
+			DeleteObject(temp3BMP);
 			DeleteObject(oldtemp2BMP);
 			DeleteObject(temp2BMP);
 			DeleteObject(selectedBMP);
 			DeleteObject(memoryBMP);
+			DeleteObject(tempDC3);
 			DeleteObject(tempDC2);
-			DeleteObject(tempDC);
-			DeleteObject(memoryDC);
-
-            EndPaint(hWnd, &ps);
-        }
-        break;
-	case WM_TIMER:
-	{
-		int x = 1;
-		x += 1;
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
-			// TODO: Add any drawing code that uses hdc here...
-			HDC hDC_Main = GetDC(hWnd);
-			HDC memoryDC = CreateCompatibleDC(hDC_Main);
-			HDC tempDC = CreateCompatibleDC(memoryDC);
-
-
-			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-			HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
-
-			RECT rect = { 0, 0, 200, 200 };
-			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
-			FillRect(memoryDC, &rect, limeBrush);
-
-			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageBase);
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC, 0 * 189, 0, SRCCOPY);
-
-			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-
-			DeleteObject(oldtempBMP);
-			DeleteObject(selectedBMP);
-			DeleteObject(memoryBMP);
 			DeleteObject(tempDC);
 			DeleteObject(memoryDC);
 
@@ -326,22 +389,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     return 0;
 }
 
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
 
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
-}
+
+// Message handler for about box.
+//INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+//{
+//    UNREFERENCED_PARAMETER(lParam);
+//    switch (message)
+//    {
+//    case WM_INITDIALOG:
+//        return (INT_PTR)TRUE;
+//
+//    case WM_COMMAND:
+//        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
+//        {
+//            EndDialog(hDlg, LOWORD(wParam));
+//            return (INT_PTR)TRUE;
+//        }
+//        break;
+//    }
+//    return (INT_PTR)FALSE;
+//}
