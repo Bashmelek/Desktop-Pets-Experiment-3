@@ -16,6 +16,7 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+void Draw(HWND hWnd);
 //INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 //my stuff
@@ -111,22 +112,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    int w = 200;
    int h = 168;
 
-   imageBase = (HBITMAP)LoadImage(
-	   NULL,
-	   L"piplup5.bmp",////\\GameResources
-	   IMAGE_BITMAP,
-	   0,
-	   0,
-	   LR_LOADFROMFILE
-   );
-   imageMask = (HBITMAP)LoadImage(
-	   NULL,
-	   L"piplup5mask.bmp",////\\GameResources
-	   IMAGE_BITMAP,
-	   0,
-	   0,
-	   LR_LOADFROMFILE
-   );
    thePet = std::make_unique <CreaturePet>();
 
    //HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_EX_LAYERED | WS_EX_APPWINDOW | WS_EX_TOPMOST | WS_EX_TRANSPARENT,//WS_OVERLAPPEDWINDOW,
@@ -223,67 +208,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_PAINT:
         {
-		PAINTSTRUCT ps;
-		HDC hdc = BeginPaint(hWnd, &ps);
-		// TODO: Add any drawing code that uses hdc here...
-		HDC hDC_Main = GetDC(hWnd);
-		HDC memoryDC = CreateCompatibleDC(hDC_Main);
-		HDC tempDC = CreateCompatibleDC(memoryDC);
-		HDC tempDC2 = CreateCompatibleDC(memoryDC);
-		HDC tempDC3 = CreateCompatibleDC(memoryDC);
-
-
-		HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-		HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
-
-
-		HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-		HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
-
-
-		HBITMAP temp3BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-		HBITMAP oldtemp3BMP = (HBITMAP)SelectObject(tempDC3, temp3BMP);
-
-		RECT rect = { 0, 0, 200, 200 };
-		HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
-		FillRect(tempDC2, &rect, limeBrush);
-		FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
-
-
-		HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageMask);
-		BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCCOPY);
-		BitBlt(tempDC3, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, NOTSRCCOPY);
-		BitBlt(memoryDC, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC3, 0, 0, SRCAND);
-		DeleteObject(oldtempBMP);
-
-		//DO NOT delete the imageMask!
-		(HBITMAP)SelectObject(tempDC, imageBase);
-		BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCAND);
-
-		if (testcheck == 0) {
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
-			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-			testcheck += 1;
-		}
-		else
-		{
-			BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
-			BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-		}
-
-		//DeleteObject(oldtempBMP);
-		DeleteObject(oldtemp3BMP);
-		DeleteObject(temp3BMP);
-		DeleteObject(oldtemp2BMP);
-		DeleteObject(temp2BMP);
-		DeleteObject(selectedBMP);
-		DeleteObject(memoryBMP);
-		DeleteObject(tempDC3);
-		DeleteObject(tempDC2);
-		DeleteObject(tempDC);
-		DeleteObject(memoryDC);
-
-		EndPaint(hWnd, &ps);
+			Draw(hWnd);
         }
         break;
 	case WM_TIMER:
@@ -296,68 +221,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				thePet->AdvanceFrame();
 			}
 			PostMessage(clickWND, WM_PAINT, wParam, lParam);
-
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
-			// TODO: Add any drawing code that uses hdc here...
-			HDC hDC_Main = GetDC(hWnd);
-			HDC memoryDC = CreateCompatibleDC(hDC_Main);
-			HDC tempDC = CreateCompatibleDC(memoryDC);
-			HDC tempDC2 = CreateCompatibleDC(memoryDC);
-			HDC tempDC3 = CreateCompatibleDC(memoryDC);
-
-
-			HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-			HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
-
-
-			HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-			HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
-
-
-			HBITMAP temp3BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
-			HBITMAP oldtemp3BMP = (HBITMAP)SelectObject(tempDC3, temp3BMP);
-
-			RECT rect = { 0, 0, 200, 200 };
-			HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
-			FillRect(tempDC2, &rect, limeBrush);
-			FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
-
-
-			HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, imageMask);
-			BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCCOPY);
-			BitBlt(tempDC3, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, NOTSRCCOPY);
-			BitBlt(memoryDC, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC3, 0, 0, SRCAND);
-			DeleteObject(oldtempBMP);
-
-			//DO NOT delete the imageMask!
-			(HBITMAP)SelectObject(tempDC, imageBase);
-			BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCAND);
-
-			if (testcheck == 0) {
-				BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
-				BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-				testcheck += 1;
-			}
-			else
-			{
-				BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
-				BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
-			}
-
-			//DeleteObject(oldtempBMP);
-			DeleteObject(oldtemp3BMP);
-			DeleteObject(temp3BMP);
-			DeleteObject(oldtemp2BMP);
-			DeleteObject(temp2BMP);
-			DeleteObject(selectedBMP);
-			DeleteObject(memoryBMP);
-			DeleteObject(tempDC3);
-			DeleteObject(tempDC2);
-			DeleteObject(tempDC);
-			DeleteObject(memoryDC);
-
-			EndPaint(hWnd, &ps);
+			Draw(hWnd);			
 		}
 		break;
 	}
@@ -387,6 +251,88 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
+}
+
+void Draw(HWND hWnd)
+{
+	//thank you Adrian McCarthy at https://stackoverflow.com/questions/18454380/how-to-correct-the-gdi-resource-leakage
+	//for sharing this very useful way to track gdi object leakage and reminding me to release HDCs
+	int gdiObjectCount = GetGuiResources(::GetCurrentProcess(), GR_GDIOBJECTS);
+
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hWnd, &ps);
+	// TODO: Add any drawing code that uses hdc here...
+	HDC hDC_Main = GetDC(hWnd);
+	HDC memoryDC = CreateCompatibleDC(hDC_Main);
+	HDC tempDC = CreateCompatibleDC(memoryDC);
+	HDC tempDC2 = CreateCompatibleDC(memoryDC);
+	HDC tempDC3 = CreateCompatibleDC(memoryDC);
+
+
+	HBITMAP memoryBMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+	HBITMAP selectedBMP = (HBITMAP)SelectObject(memoryDC, memoryBMP);
+
+
+	HBITMAP temp2BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+	HBITMAP oldtemp2BMP = (HBITMAP)SelectObject(tempDC2, temp2BMP);
+
+
+	HBITMAP temp3BMP = (HBITMAP)CreateCompatibleBitmap(hDC_Main, 200, 200);
+	HBITMAP oldtemp3BMP = (HBITMAP)SelectObject(tempDC3, temp3BMP);
+
+	RECT rect = { 0, 0, 200, 200 };
+	HBRUSH limeBrush = CreateSolidBrush(RGB(124, 254, 124));
+	FillRect(tempDC2, &rect, limeBrush);
+	FillRect(memoryDC, &rect, limeBrush);//WHITE_BRUSH
+
+
+	HBITMAP oldtempBMP = (HBITMAP)SelectObject(tempDC, thePet->imageMask);
+	BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCCOPY);
+	BitBlt(tempDC3, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, NOTSRCCOPY);
+	BitBlt(memoryDC, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC3, 0, 0, SRCAND);
+	//DeleteObject(oldtempBMP);
+
+	//DO NOT delete the imageMask!
+	(HBITMAP)SelectObject(tempDC, thePet->imageBase);
+	BitBlt(tempDC2, 0, 0, thePet->frameWidth, thePet->frameHeight, tempDC, thePet->frameStartX, thePet->frameStartY, SRCAND);
+
+	if (testcheck == 0) {
+		BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+		BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+		testcheck += 1;
+	}
+	else
+	{
+		BitBlt(memoryDC, 0, 0, 200, 200, tempDC2, 0 * 189, 0, SRCPAINT);
+		BitBlt(hDC_Main, 0, 0, 200, 200, memoryDC, 0, 0, SRCCOPY);
+	}
+
+	DeleteObject(limeBrush);
+	DeleteObject(temp3BMP);
+	DeleteObject(temp2BMP);
+	DeleteObject(memoryBMP);
+
+	//DO NOT delete the imageMask!
+
+	(HBITMAP)SelectObject(tempDC3, oldtemp3BMP);
+	DeleteObject(oldtemp3BMP);
+	DeleteObject(tempDC3);
+
+	(HBITMAP)SelectObject(tempDC2, oldtemp2BMP);
+	DeleteObject(oldtemp2BMP);
+	DeleteObject(tempDC2);
+
+	(HBITMAP)SelectObject(tempDC, oldtempBMP);
+	DeleteObject(oldtempBMP);
+	DeleteObject(tempDC);
+
+	(HBITMAP)SelectObject(memoryDC, selectedBMP);
+	DeleteObject(selectedBMP);
+	DeleteObject(memoryDC);
+
+	EndPaint(hWnd, &ps);
+	ReleaseDC(hWnd, hdc);
+	ReleaseDC(hWnd, hDC_Main);
 }
 
 
